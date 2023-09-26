@@ -17,7 +17,8 @@
     "depends": [
         "sale",
         "sale_stock",
-        "project",
+        "mrp",
+        "purchase"
     ],
     'images': ['static/description/banner.png', 'static/description/icon.png'],
     'installable': True,
