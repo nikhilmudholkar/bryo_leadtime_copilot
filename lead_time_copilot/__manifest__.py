@@ -15,7 +15,7 @@
         'data/copilot_user_partner_data.xml',
     ],
     "depends": [
-        "sales",
+        "sale",
         "sale_stock",
         "mrp",
         "purchase"
