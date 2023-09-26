@@ -15,6 +15,7 @@ class Channel(models.Model):
     _inherit = 'mail.channel'
     process_tracker = fields.Char(string="Process Tracker", default="process_started")
     unstructured_data = fields.Char(string="Unstructured Data", default="unstructured_data")
+    unstructured_data_formatted = fields.Char(string="Unstructured Data Formatted", default="unstructured_data_formatted")
     latest_ai_response = fields.Char(string="Latest AI Response", default="latest_ai_response")
     vendor_id = fields.Char(string="Vendor ID", default="vendor_id")
     # create a new field product ids which is a list
@@ -95,6 +96,8 @@ class Channel(models.Model):
             try:
                 messages = self.message_ids
                 print("latest message from", messages[0].author_id.name)
+
+
                 latest_message = remove_tags(messages[0].body)
                 latest_author_id = messages[0].author_id.id
                 latest_channel_name = messages[0].record_name
@@ -123,6 +126,12 @@ class Channel(models.Model):
                 if self.process_tracker == 'process_started':
                     self.process_tracker = 'identify_vendor'
                     self.unstructured_data = latest_message
+                    self.unstructured_data_formatted = messages[0].body
+                    # replace <br> with \n
+                    self.unstructured_data_formatted = self.unstructured_data_formatted.replace("<br>", "\n")
+                    self.unstructured_data_formatted = self.unstructured_data_formatted.replace("<p>", "")
+                    self.unstructured_data_formatted = self.unstructured_data_formatted.replace("</p>", "")
+                    print("LATEST MESSAGE: ", self.unstructured_data_formatted)
                     print(self.unstructured_data)
 
                 if latest_message == "exit":
@@ -516,7 +525,8 @@ class Channel(models.Model):
                     # res = askaidelayedproducts(latest_message, inventory_df, sales_order_df)
                     res = calculate_impacted_saleorders(inventory_df, sales_order_df, self.purchase_orders)
                     # self.impacted_so = res.to_string(index=False)
-                    self.impacted_so = res.to_json(orient='records')
+                    self.impacted_so = res.to_csv(index=False)
+                    # self.impacted_so = res.to_json(orient='records')
                     res = res.to_html(index=False)
                     latest_channel.with_user(copilot_user).message_post(body=res, message_type='comment',
                                                                         subtype_xmlid='mail.mt_comment')
@@ -573,7 +583,8 @@ class Channel(models.Model):
                     res = calculate_impacted_manufacturing_orders(inventory_df, manufacturing_orders_df,
                                                                   self.purchase_orders)
                     # self.impacted_mo = res.to_string(index=False)
-                    self.impacted_mo = res.to_json(orient='records')
+                    self.impacted_mo = res.to_csv(index=False)
+                    # self.impacted_mo = res.to_json(orient='records')
                     # print("---------------")
                     # print(self.impacted_mo)
                     # print("---------------")
@@ -587,14 +598,14 @@ class Channel(models.Model):
                     latest_channel.with_user(copilot_user).message_post(body="Do you want to notify the responsible person via slack or email? Reply with slack/email", message_type='comment',
                                                                         subtype_xmlid='mail.mt_comment')
                 if self.process_tracker == "creating_draft" and latest_message == "slack":
-                    draft_msg = create_message_draft("slack", self.unstructured_data, self.impacted_so, self.impacted_mo)
+                    draft_msg = create_message_draft("slack", self.unstructured_data_formatted, self.impacted_so, self.impacted_mo)
                     latest_channel.with_user(copilot_user).message_post(
                         body=draft_msg,
                         message_type='comment',
                         subtype_xmlid='mail.mt_comment')
 
                 if self.process_tracker == "creating_draft" and latest_message == "email":
-                    draft_msg = create_message_draft("email", self.unstructured_data, self.impacted_so, self.impacted_mo)
+                    draft_msg = create_message_draft("email", self.unstructured_data_formatted, self.impacted_so, self.impacted_mo)
                     latest_channel.with_user(copilot_user).message_post(
                         body=draft_msg,
                         message_type='comment',
