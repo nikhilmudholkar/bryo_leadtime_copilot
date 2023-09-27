@@ -20,6 +20,9 @@
         "mrp",
         "purchase"
     ],
+    "external_dependencies": {
+       'python': ["pandas"],
+    },
     'images': ['static/description/banner.png', 'static/description/icon.png'],
     'installable': True,
 }
