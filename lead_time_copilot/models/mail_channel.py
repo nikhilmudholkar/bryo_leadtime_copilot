@@ -12,6 +12,7 @@ from odoo.exceptions import UserError
 
 
 class Channel(models.Model):
+    # added test comment
     _inherit = 'mail.channel'
     process_tracker = fields.Char(string="Process Tracker", default="process_started")
     unstructured_data = fields.Char(string="Unstructured Data", default="unstructured_data")
